@@ -2,118 +2,144 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>secret chat</title>
+    <title>Secret Chat</title>
     <style>
        body {
-    font-family: 'Comic Sans MS', cursive; /* Playful font */
-    margin: 20px;
-    background-color: #ffe6f0; /* Soft pink background */
-    color: #ff4081; /* Warm pink text */
-}
-h1 {
-    text-align: center;
-    font-size: 36px;
-    text-shadow: 2px 2px #ffcccb; /* Light pink shadow */
-}
-#messages {
-    border: 2px solid #ff80ab; /* Cute pink border */
-    height: 400px;
-    overflow-y: scroll;
-    padding: 15px;
-    background-color: #fff0f5; /* Pale pink */
-    border-radius: 15px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(255, 105, 180, 0.3); /* Soft shadow */
-}
-#messageInput {
-    width: 70%;
-    padding: 10px;
-    border: 2px solid #ff80ab;
-    border-radius: 10px;
-    margin: 10px 0;
-    font-size: 16px;
-}
-button {
-    padding: 10px 20px;
-    background-color: #ff4081; /* Vibrant pink button */
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-}
-button:hover {
-    background-color: #f50057; /* Darker pink on hover */
-}
-p {
-    margin: 5px 0;
-    padding: 8px;
-    background-color: #ffebee; /* Light red bubble */
-    border-radius: 10px;
-    display: inline-block;
-}
-img {
-    max-width: 200px; /* Limit photo size */
-    border-radius: 10px;
-    margin: 5px 0;
-}
+           font-family: 'Comic Sans MS', cursive;
+           margin: 20px;
+           background-color: #ffe6f0;
+           color: #ff4081;
+       }
+       h1 {
+           text-align: center;
+           font-size: 36px;
+           text-shadow: 2px 2px #ffcccb;
+       }
+       #messages {
+           border: 2px solid #ff80ab;
+           height: 400px;
+           overflow-y: scroll;
+           padding: 15px;
+           background-color: #fff0f5;
+           border-radius: 15px;
+           box-shadow: 0 4px 8px rgba(255, 105, 180, 0.3);
+       }
+       #messageInput {
+           width: 70%;
+           padding: 10px;
+           border: 2px solid #ff80ab;
+           border-radius: 10px;
+           margin: 10px 0;
+           font-size: 16px;
+       }
+       button {
+           padding: 10px 20px;
+           background-color: #ff4081;
+           color: white;
+           border: none;
+           border-radius: 10px;
+           cursor: pointer;
+           font-size: 16px;
+       }
+       button:hover {
+           background-color: #f50057;
+       }
+       p {
+           margin: 5px 0;
+           padding: 8px;
+           background-color: #ffebee;
+           border-radius: 10px;
+           display: block;
+       }
+       img {
+           max-width: 200px;
+           border-radius: 10px;
+           margin: 5px 0;
+       }
     </style>
 </head>
 <body>
-    <h1>secret chat</h1>
+    <h1>Secret Chat</h1>
     <div id="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message...">
+    <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if (event.key === 'Enter') sendMessage()">
     <input type="file" id="photoInput" accept="image/*">
     <button onclick="sendMessage()">Send</button>
+    <button onclick="clearChat()">Clear Chat</button>
 
     <script>
     const messagesDiv = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-const photoInput = document.getElementById('photoInput');
+    const messageInput = document.getElementById('messageInput');
+    const photoInput = document.getElementById('photoInput');
 
-function sendMessage() {
-    const message = messageInput.value;
-    const photo = photoInput.files[0];
+    function sendMessage() {
+        const message = messageInput.value;
+        const photo = photoInput.files[0];
 
-    if (message.trim() === '' && !photo) return; // Don’t send if both are empty
+        if (message.trim() === '' && !photo) return;
 
-    const formData = new FormData();
-    if (message) formData.append('message', message);
-    if (photo) formData.append('photo', photo);
+        const formData = new FormData();
+        if (message) formData.append('message', message);
+        if (photo) formData.append('photo', photo);
 
-    fetch('/send', {
-        method: 'POST',
-        body: formData
-    })
-    .then(() => {
-        if (message) addMessage('You: ' + message);
-        if (photo) {
-            const reader = new FileReader();
-            reader.onload = () => addMessage('You: <img src="' + reader.result + '">');
-            reader.readAsDataURL(photo);
-        }
-        messageInput.value = '';
-        photoInput.value = '';
-    });
-}
-
-function addMessage(content) {
-    const p = document.createElement('p');
-    p.innerHTML = content; // Use innerHTML to render images
-    messagesDiv.appendChild(p);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-setInterval(() => {
-    fetch('/messages')
-        .then(response => response.json())
-        .then(data => {
-            messagesDiv.innerHTML = '';
-            data.forEach(item => {
-                if (item.message) addMessage('You: ' + item.message);
-                if (item.photoUrl) addMessage('You: <img src="' + item.photoUrl + '">');
-            });
+        fetch('/send', {
+            method: 'POST',
+            body: formData
+        })
+        .then(() => {
+            if (message) addMessage('You: ' + message);
+            if (photo) {
+                const reader = new FileReader();
+                reader.onload = () => addMessage('You: <img src="' + reader.result + '">');
+                reader.readAsDataURL(photo);
+            }
+            messageInput.value = '';
+            photoInput.value = '';
         });
-}, 1000);
+    }
+
+    function addMessage(content, index) {
+        const p = document.createElement('p');
+        p.innerHTML = content;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.style.marginLeft = '10px';
+        deleteButton.onclick = () => deleteMessage(index);
+
+        p.appendChild(deleteButton);
+        messagesDiv.appendChild(p);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function clearChat() {
+        fetch('/clear', {
+            method: 'POST'
+        }).then(() => {
+            messagesDiv.innerHTML = '';
+        });
+    }
+
+    function deleteMessage(index) {
+        fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ index })
+        }).then(() => fetchMessages());
+    }
+
+    function fetchMessages() {
+        fetch('/messages')
+            .then(response => response.json())
+            .then(data => {
+                messagesDiv.innerHTML = '';
+                data.forEach((item, index) => {
+                    if (item.message) addMessage('You: ' + item.message, index);
+                    if (item.photoUrl) addMessage('You: <img src="' + item.photoUrl + '">', index);
+                });
+            });
+    }
+
+    setInterval(fetchMessages, 1000);
     </script>
 </body>
 </html>
