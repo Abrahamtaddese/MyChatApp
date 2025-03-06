@@ -1,58 +1,71 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const { MongoClient } = require('mongodb');
 const app = express();
 const port = 3000;
 
 app.use(express.json());
-app.use(express.static('.')); // Serve static files (like index.html)
-app.use('/uploads', express.static('uploads')); // Serve uploaded photos
+app.use(express.static('.'));
+app.use('/uploads', express.static('uploads'));
 
-// Set up multer for file uploads
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+        cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 const upload = multer({ storage: storage });
 
-let messages = []; // Store messages and photo URLs
+// MongoDB Connection
+const uri = process.env.MONGODB_URI || "mongodb+srv://abrahamtaddese21:pkOfzz8CHRV7oRuA@cluster0.ddm0y.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const client = new MongoClient(uri);
+let messagesCollection;
 
-// Route to fetch all messages
-app.get('/messages', (req, res) => {
+async function connectDB() {
+    try {
+        await client.connect();
+        console.log("Connected to MongoDB");
+        const db = client.db('chatdb');
+        messagesCollection = db.collection('messages');
+    } catch (err) {
+        console.error("MongoDB error:", err);
+    }
+}
+connectDB();
+
+app.get('/messages', async (req, res) => {
+    const messages = await messagesCollection.find({}).toArray();
     res.json(messages);
 });
 
-// Route to send a message or photo
-app.post('/send', upload.single('photo'), (req, res) => {
+app.post('/send', upload.single('photo'), async (req, res) => {
     const message = req.body.message;
     const photo = req.file;
 
-    if (message) messages.push({ message: message });
-    if (photo) messages.push({ photoUrl: '/uploads/' + photo.filename });
+    if (message) await messagesCollection.insertOne({ message: message, timestamp: new Date() });
+    if (photo) await messagesCollection.insertOne({ photoUrl: '/uploads/' + photo.filename, timestamp: new Date() });
 
     res.send('Message or photo sent');
 });
 
-// Route to clear all messages
-app.post('/clear', (req, res) => {
-    messages.length = 0; // Clear the messages array
+app.post('/clear', async (req, res) => {
+    await messagesCollection.deleteMany({});
     res.send('Chat cleared');
 });
 
-// Route to delete a specific message
-app.post('/delete', (req, res) => {
-    const { index } = req.body; // Get the index of the message to delete
+app.post('/delete', async (req, res) => {
+    const { index } = req.body;
+    const messages = await messagesCollection.find({}).toArray();
     if (index >= 0 && index < messages.length) {
-        messages.splice(index, 1); // Remove the specific message
+        const messageToDelete = messages[index];
+        await messagesCollection.deleteOne({ _id: messageToDelete._id });
         res.send('Message deleted');
     } else {
-        res.status(400).send('Invalid index'); // Handle invalid index
+        res.status(400).send('Invalid index');
     }
 });
 
-// Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
