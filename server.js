@@ -12,7 +12,7 @@ app.use(express.static('.'));
 
 let messagesCollection;
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://abrahamtaddese21:pkOfzz8CHRV7oRuA@cluster0.ddm0y.mongodb.net/chatdb?retryWrites=true&w=majority";
+const uri = process.env.MONGODB_URI || "mongodb+srv://abrahamtaddese21:pkOfzz8CHRV7oRuA@cluster0.ddm0y.mongodb.net/chatdb?retryWrites=true&w=majority&ssl=false";
 
 async function connectDB() {
     try {
