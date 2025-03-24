@@ -12,14 +12,15 @@ app.use(express.static('.'));
 
 let messagesCollection;
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://abrahamtaddese21:pkOfzz8CHRV7oRuA@cluster0.ddm0y.mongodb.net/chatdb?retryWrites=true&w=majority&ssl=false";
+const uri = process.env.MONGODB_URI || "mongodb+srv://abrahamtaddese21:pkOfzz8CHRV7oRuA@cluster0.ddm0y.mongodb.net/chatdb?retryWrites=true&w=majority";
 
 async function connectDB() {
     try {
         const client = new MongoClient(uri, {
-            useUnifiedTopology: true, // Modern topology engine
-            serverSelectionTimeoutMS: 15000,
-            connectTimeoutMS: 20000
+            serverSelectionTimeoutMS: 30000, // 30 seconds
+            connectTimeoutMS: 30000,         // 30 seconds
+            ssl: true,                       // Explicitly enable SSL
+            tlsAllowInvalidCertificates: false // Enforce valid certificates
         });
         await client.connect();
         console.log("Connected to MongoDB successfully");
